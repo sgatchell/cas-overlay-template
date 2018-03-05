@@ -1,0 +1,26 @@
+#fm1 {
+}
+
+#fm1 label {
+  display:block;  
+}
+
+#frog {
+  width: 225px;
+  float:right;
+  margin: -50px 0 0 0;
+}
+
+#remember_me {
+  margin-left:10px;
+}
+
+#errors, #not-verified-errors {
+  display: none;
+}
+.has-error #errors {
+  display: block;
+}
+.has-not-verified-error #not-verified-errors {
+  display: block;
+}
