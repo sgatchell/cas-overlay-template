@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<html>
 
 <head>
     <!--<title th:text="#{cas.login.pagetitle}"></title>-->
@@ -11,20 +11,140 @@
 </head>
 
 <body id="cas" class="login">
-    <div layout:fragment="content">
-        <div class="row">
-            <div id="notices" class="col-sm-12 col-md-6 col-md-push-6">
-                <div th:replace="fragments/insecure"/>
-                <div th:replace="fragments/defaultauthn"/>
-                <div th:replace="fragments/cookies"/>
-                <div th:replace="fragments/serviceui"/>
-                <div th:replace="fragments/cas-resources-list" />
-                <div th:replace="fragments/loginProviders" />
-            </div>
-            <div class="col-sm-12 col-md-6 col-md-pull-6">
-                <div th:replace="fragments/loginform" />
-            </div>
+
+    <!-- Google Tag Manager -->
+    <noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-TP26BH"
+                      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-TP26BH');</script>
+
+    <noscript><iframe src="//www.googletagmanager.com/ns.html?id=GTM-MQQMGF"
+                      height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        '//www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-MQQMGF');</script>
+    <!-- End Google Tag Manager -->
+
+    <div id="banner">
+        <div class="content">
+            <a id='logo' href="http://www.plos.org">
+                <img alt="PLOS ONE" src="images/logo.png" />
+            </a>
         </div>
     </div>
+
+    <div id="page-body">
+        <div class="content">
+            <h1>Sign in to PLOS</h1>
+
+                <!--<form method="post" id="fm1" name="login_form" class="ambra-form" htmlEscape="true">-->
+                <form method="post" id="fm1" th:object="${credential}" action="login" name="login_form" class="ambra-form" >
+                    <fieldset>
+                        <input type="hidden" name="lt" value="${loginTicket}" />
+                        <input type="hidden" name="execution" value="${flowExecutionKey}" />
+                        <input type="hidden" name="_eventId" value="submit" />
+
+                        <!--If there is at least one error message, then display a generic error message-->
+                        <!--at the top of the form and another error message next to the email field.-->
+
+                        <!--This use of the "form:errors" tag's "elements" attribute actually hides the original-->
+                        <!--messages (which were set in the "messages_en.properties" file).-->
+                        <!--<form:errors path="*" element="!&#45;&#45;">-->
+                            <!--<c:forEach items="${messages}" var="message">-->
+                                <!--<c:set var="anyErrorMessage" value="${message}"/>-->
+                            <!--</c:forEach>-->
+                        <!--</form:errors>-->
+                        <div class="alert alert-danger" th:if="${#fields.hasErrors('*')}">
+                            <span th:each="err : ${#fields.errors('*')}" th:utext="${err}"/>
+                        </div>
+
+                        <div id='field_container' th:class="${not #lists.isEmpty(ErrorMessage)}? 'has-error'">
+                            <div id="errors" class="bg-danger text-danger">
+                                <div th:if="${not #lists.isEmpty(ErrorMessage)}">
+                                    <div th:switch="${anyErrorMessage}">
+                                        <span th:case="'Email not verified.'" th:text="'Please check your email to verify your email address.'" />
+                                        <span th:case="'Incorrect email address.'" th:text="'Incorrect email address. Please enter a valid e-mail address.'" />
+                                        <span th:case="'Incorrect Password.'" th:text="'Incorrect password. Please enter a valid password.'" />
+                                        <span th:case="*" th:text="'Please enter a valid e-mail address and password.'" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class='row ' th:if="${openIdLocalId != null}">
+                                <div class="col-xs-12 col-sm-6 col-md-4 form-group">
+                                    <label for="username" class="control-label">Email</label>
+                                    <input type="text" class="form-control" id="username" placeholder="e.g. yourname@institution.edu" size="25" tabindex="1" accesskey="${userNameAccessKey}" path="username" autocomplete="false" htmlEscape="true" />
+                                </div>
+                            </div>
+
+                            <div class='row'>
+                                <div class="col-xs-12 col-sm-6 col-md-4 form-group">
+                                    <label for="password" class="control-label">Password</label>
+                                    <input type="password" class="form-control" id="password" size="25" tabindex="2" path="password" accesskey="${passwordAccessKey}" htmlEscape="true" autocomplete="off" />
+                                    <!--<a href="${registrationBaseUrl}/registration/forgot-password" title="Click here if you forgot your password">Forgot your password?</a>-->
+                                </div>
+                            </div>
+                        </div>
+
+                        <img id='frog' src="images/frog.jpg">
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">Sign In</button>
+                            <input type="checkbox" name="rememberMe" id="rememberMe" /> Remember me
+                        </div>
+                    </fieldset>
+                </form>
+
+                <!--<a href="${registrationBaseUrl}/registration/new?destination=${destinationUrl}">Register for a New Account</a> |-->
+                <!--<a href="${registrationBaseUrl}/registration/resend-confirmation-email">Resend e-mail address confirmation</a>-->
+
+        </div> <!--page-body -->
+    </div> <!-- content -->
+
+
+    <div id="page-footer">
+        <div class="content row">
+
+            <div class="col-xs-12 col-sm-6" id="col-1">
+                <img src="images/logo-plos-footer.png" alt="PLOS Logo" />
+
+                <div class="nav nav-aux">
+                    <a class='muted' href="https://www.plos.org/about/privacy-policy/">Privacy Policy</a> |
+                    <a class='muted' href="https://www.plos.org/about/terms-use/">Terms of Use</a> |
+                    <a class='muted' href="https://www.plos.org/advertise/">Advertise</a> |
+                    <a class='muted' href="https://www.plos.org/about/media-inquiries/">Media Inquiries</a>
+                </div>
+            </div>
+
+            <div id="col-2" class="col-xs-6 col-sm-3" >
+                <a href="https://www.plos.org/publications/journals/">Publications</a>
+                <p>
+                <ul id='journals' class="list-unstyled">
+                    <li><a href="http://plosone.org" class="muted">PLOS ONE</a> </li>
+                    <li><a href="http://journals.plos.org/plosbiology/" class="muted">PLOS Biology</a> </li>
+                    <li><a href="http://journals.plos.org/ploscompbiol/" class="muted">PLOS Computational Biology</a> </li>
+                    <li><a href="http://journals.plos.org/plosgenetics/" class="muted">PLOS Genetics</a> </li>
+                    <li><a href="http://journals.plos.org/plosmedicine/" class="muted">PLOS Medicine</a> </li>
+                    <li><a href="http://journals.plos.org/plosntds/" class="muted">PLOS Neglected Tropical Diseases</a> </li>
+                    <li><a href="http://journals.plos.org/plospathogens/" class="muted">PLOS Pathogens</a> </li>
+                    <li><a href="http://currents.plos.org" class="muted">PLOS Currents</a> </li>
+                </ul>
+                </p>
+            </div>
+
+            <div id="col-3" class="col-xs-6 col-sm-3">
+                <a href="https://www.plos.org">plos.org</a>
+                <a href="http://blogs.plos.org">Blogs</a>
+                <a href="http://www.ploscollections.org">Collections</a>
+                <a href="https://www.plos.org/contact">Send us feedback</a>
+            </div>
+
+        </div>
+    </div><!-- page-footer -->
 </body>
 </html>
