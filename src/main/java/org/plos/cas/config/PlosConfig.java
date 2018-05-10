@@ -61,16 +61,16 @@ public class PlosConfig implements AuthenticationEventExecutionPlanConfigurer {
 
   // custom config properties
 
-  @Value("${auth.database.url:jdbc:mysql://localhost:3306/namedEntities}")
+  @Value("${auth.database.url:jdbc:mysql://localhost:3306/unknownDb}")
   private String dbUrl;
 
   @Value("${auth.database.driverClass:com.mysql.jdbc.Driver}")
   private String dbDriver;
 
-  @Value("${auth.database.user:ned}")
+  @Value("${auth.database.user:unspecifiedUser}")
   private String dbUser;
 
-  @Value("${auth.database.password:}")
+  @Value("${auth.database.password:unspecifiedPassword}")
   private String dbPassword;
 
   @Value("${auth.database.batchSize:10}")
