@@ -79,6 +79,8 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <mysql-connector-java.version>5.1.6</mysql-connector-java.version>
+        <ned.version>1.4.1</ned.version>
     </properties>
 
     <repositories>
@@ -106,6 +108,17 @@
             <id>shibboleth-releases</id>
             <url>https://build.shibboleth.net/nexus/content/repositories/releases</url>
         </repository>
+        <repository>
+            <id>ambra</id>
+            <name>Maven 2 Release Repository for Ambra</name>
+            <url>http://maven.ambraproject.org/maven2/release/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
     </repositories>
 
     <profiles>
@@ -130,10 +143,100 @@
                     <artifactId>cas-server-support-jdbc</artifactId>
                     <version>${cas.version}</version>
                 </dependency>
+
+                <dependency>
+                    <groupId>org.apereo.cas</groupId>
+                    <artifactId>cas-server-support-jdbc-drivers</artifactId>
+                    <version>${cas.version}</version>
+                </dependency>
+
+
+                <dependency>
+                    <groupId>org.apereo.cas</groupId>
+                    <artifactId>cas-server-core-webflow</artifactId>
+                    <version>${cas.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.apereo.cas</groupId>
+                    <artifactId>cas-server-core-api-validation</artifactId>
+                    <version>${cas.version}</version>
+                    <scope>compile</scope>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.apereo.cas</groupId>
+                    <artifactId>cas-server-support-rest</artifactId>
+                    <version>${cas.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.apereo.cas</groupId>
+                    <artifactId>cas-server-support-token-webflow</artifactId>
+                    <version>${cas.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.apereo.cas</groupId>
+                    <artifactId>cas-server-core-api-authentication</artifactId>
+                    <version>${cas.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.apereo.cas</groupId>
+                    <artifactId>cas-server-core-authentication</artifactId>
+                    <version>${cas.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.apereo.cas</groupId>
+                    <artifactId>cas-server-core-web</artifactId>
+                    <version>${cas.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.apereo.cas</groupId>
+                    <artifactId>cas-server-support-validation</artifactId>
+                    <version>${cas.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.apereo.cas</groupId>
+                    <artifactId>cas-server-core-util</artifactId>
+                    <version>${cas.version}</version>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.apereo.cas</groupId>
+                    <artifactId>cas-server-core-configuration</artifactId>
+                    <version>${cas.version}</version>
+                </dependency>
+
+
                 <dependency>
                     <groupId>mysql</groupId>
                     <artifactId>mysql-connector-java</artifactId>
-                    <version>5.1.6</version>
+                    <version>${mysql-connector-java.version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+
+                <dependency>
+                  <groupId>com.mchange</groupId>
+                  <artifactId>c3p0</artifactId>
+                  <version>0.9.5.2</version>
+                </dependency>
+
+                <dependency>
+                  <groupId>org.plos</groupId>
+                  <artifactId>named-entity-password</artifactId>
+                  <version>${ned.version}</version>
+                  <exclusions>
+                    <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                    </exclusion>
+                  </exclusions>
                 </dependency>
             </dependencies>
         </profile>
