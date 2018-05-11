@@ -1,0 +1,9 @@
+{
+  /*
+    allow all services to register with CAS
+  */
+  "@class" : "org.apereo.cas.services.RegexRegisteredService",
+  "serviceId" : "^(https|http)://.*",
+  "name" : "HTTPS and HTTP",
+  "id" : 10000001,
+}
