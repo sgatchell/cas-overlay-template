@@ -1,14 +1,24 @@
 package org.plos.cas.config;
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.apereo.cas.authentication.AuthenticationEventExecutionPlan;
 import org.apereo.cas.authentication.AuthenticationEventExecutionPlanConfigurer;
 import org.apereo.cas.authentication.AuthenticationHandler;
+import org.apereo.cas.authentication.PrincipalException;
+import org.apereo.cas.authentication.adaptive.UnauthorizedAuthenticationException;
+import org.apereo.cas.authentication.exceptions.AccountDisabledException;
+import org.apereo.cas.authentication.exceptions.AccountPasswordMustChangeException;
+import org.apereo.cas.authentication.exceptions.InvalidLoginLocationException;
+import org.apereo.cas.authentication.exceptions.InvalidLoginTimeException;
 import org.apereo.cas.authentication.principal.DefaultPrincipalFactory;
 import org.apereo.cas.authentication.principal.PrincipalFactory;
 import org.apereo.cas.authentication.principal.resolvers.PersonDirectoryPrincipalResolver;
 import org.apereo.cas.configuration.CasConfigurationProperties;
-import org.apereo.services.persondir.support.NamedStubPersonAttributeDao;
+import org.apereo.cas.services.UnauthorizedServiceForPrincipalException;
+import org.apereo.cas.ticket.UnsatisfiedAuthenticationPolicyException;
+import org.apereo.cas.web.flow.actions.AuthenticationExceptionHandlerAction;
 import org.apereo.services.persondir.support.jdbc.SingleRowJdbcPersonAttributeDao;
+import org.plos.cas.authenticationHandler.DatabaseAuthenticationHandler;
 import org.plos.cas.authenticationHandler.EmailAddressIncorrectException;
 import org.plos.cas.authenticationHandler.NotVerifiedException;
 import org.plos.cas.authenticationHandler.PasswordIncorrectException;
@@ -17,36 +27,19 @@ import org.plos.cas.service.DatabaseServiceImpl;
 import org.plos.namedentity.service.PasswordDigestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.endpoint.mvc.MvcEndpoint;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-
-import com.mchange.v2.c3p0.ComboPooledDataSource;
-
-
-import org.apereo.cas.authentication.PrincipalException;
-import org.apereo.cas.authentication.adaptive.UnauthorizedAuthenticationException;
-
-import org.apereo.cas.authentication.exceptions.AccountDisabledException;
-import org.apereo.cas.authentication.exceptions.AccountPasswordMustChangeException;
-import org.apereo.cas.authentication.exceptions.InvalidLoginLocationException;
-import org.apereo.cas.authentication.exceptions.InvalidLoginTimeException;
-import org.apereo.cas.services.UnauthorizedServiceForPrincipalException;
-import org.apereo.cas.ticket.UnsatisfiedAuthenticationPolicyException;
-import org.apereo.cas.web.flow.actions.AuthenticationExceptionHandlerAction;
-
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.cloud.context.config.annotation.RefreshScope;
+import org.springframework.core.env.Environment;
 import org.springframework.webflow.execution.Action;
 
-import java.beans.PropertyVetoException;
-import java.util.*;
-
-import org.springframework.core.env.Environment;
-import org.plos.cas.authenticationHandler.DatabaseAuthenticationHandler;
-
 import javax.sql.DataSource;
+import java.beans.PropertyVetoException;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 
 @Configuration("PlosConfig")
@@ -96,7 +89,6 @@ public class PlosConfig implements AuthenticationEventExecutionPlanConfigurer {
   public void configureAuthenticationExecutionPlan(final AuthenticationEventExecutionPlan plan) {
     plan.registerAuthenticationHandler(databaseAuthenticationHandler());
   }
-
 
   @Bean
   public DatabaseService databaseService() {
@@ -173,76 +165,53 @@ public class PlosConfig implements AuthenticationEventExecutionPlanConfigurer {
 
     return errors;
   }
+
+  @Bean(name = {"usernamePasswordPrincipalResolver", "primaryPrincipalResolver"})
+  public PersonDirectoryPrincipalResolver primaryPrincipalResolver() {
+    return new PersonDirectoryPrincipalResolver(personAttributeDao(), principalFactory(),true,  "username");
+  }
+
+  @Bean(name = {"defaultPrincipalFactory", "principalFactory"})
+  public PrincipalFactory principalFactory() {
+    return new DefaultPrincipalFactory();
+  }
+
+  @Bean(name = "attributeRepository")
+  public SingleRowJdbcPersonAttributeDao personAttributeDao() {
+
+    SingleRowJdbcPersonAttributeDao dao = new SingleRowJdbcPersonAttributeDao(nedDataSourceBean(), "" +
+        "SELECT e.emailAddress, i.firstName, i.middleName, i.lastName, i.displayName, a.authId, a.nedId," +
+        "    CONCAT('['," +
+        "      IFNULL(GROUP_CONCAT(" +
+        "        DISTINCT" +
+        "        CONCAT('{&quot;applicationtype&quot;:&quot;',gt1.shortDescription,'&quot;,&quot;type&quot;:&quot;',gt2.shortDescription,'&quot;}')" +
+        "        ORDER BY gt1.shortDescription" +
+        "        SEPARATOR ','" +
+        "      ),'')," +
+        "    ']') groups" +
+        "  FROM authCas a" +
+        "  JOIN emails e ON a.emailId = e.id AND a.nedId = e.nedId" +
+        "  JOIN individualProfiles i ON a.nedId = i.nedId" +
+        "  LEFT JOIN groups g ON a.nedId = g.nedId" +
+        "  LEFT JOIN globalTypes gt1 ON g.applicationTypeId = gt1.id" +
+        "  LEFT JOIN globalTypes gt2 ON g.typeId = gt2.id" +
+        "  WHERE {0}");
+
+    dao.setQueryAttributeMapping(new HashMap<String, String>() {{
+        put("username", "authId");
+    }});
+
+    dao.setResultAttributeMapping(new HashMap<String, String>() {{
+        put("authId","authId");
+        put("displayName","displayName");
+        put("emailAddress","emailAddress");
+        put("firstName","firstName");
+        put("groups","groups");
+        put("lastName","lastName");
+        put("middleName","middleName");
+        put("nedId","nedId");
+    }});
+
+    return dao;
+  }
 }
-
-//  @Bean
-//  public NamedStubPersonAttributeDao attributeRepository() {
-//    return new NamedStubPersonAttributeDao(attrRepoBackingMap());
-//  }
-//
-//  @Bean
-//  public Map<String, String> attrRepoBackingMap() {
-//
-//    return new HashMap<String, String>() {{
-//      put("uid", "uid");
-//      put("eduPersonAffiliation","eduPersonAffiliation");
-//      put("groupMembership","groupMembership");
-////      put("memberOf", new ArrayList<String>() {{
-////        add("faculty");
-////        add("staff");
-////        add("org");
-////      }}
-////      );
-//    }};
-//  }
-
-
-  // Aperta auth works without these beans. Kill if not needed.
-  // @Bean(name = {"usernamePasswordPrincipalResolver", "primaryPrincipalResolver"})
-  // public PersonDirectoryPrincipalResolver primaryPrincipalResolver() {
-  //   return new PersonDirectoryPrincipalResolver(personAttributeDao(), principalFactory(),true,  "username");
-  // }
-
-
-  // @Bean(name = {"defaultPrincipalFactory", "principalFactory"})
-  // public PrincipalFactory principalFactory() {
-  //   return new DefaultPrincipalFactory();
-  // }
-
-  // @Bean
-  // public SingleRowJdbcPersonAttributeDao personAttributeDao() {
-  //   SingleRowJdbcPersonAttributeDao dao = new SingleRowJdbcPersonAttributeDao(nedDataSourceBean(), "\"\n" +
-  //       "SELECT e.emailAddress, i.firstName, i.middleName, i.lastName, i.displayName, a.authId, a.nedId,\n" +
-  //       "    CONCAT('[',\n" +
-  //       "      IFNULL(GROUP_CONCAT(\n" +
-  //       "        DISTINCT\n" +
-  //       "        CONCAT('{&quot;applicationtype&quot;:&quot;',gt1.shortDescription,'&quot;,&quot;type&quot;:&quot;',gt2.shortDescription,'&quot;}')\n" +
-  //       "        ORDER BY gt1.shortDescription\n" +
-  //       "        SEPARATOR ','\n" +
-  //       "      ),''),\n" +
-  //       "    ']') groups\n" +
-  //       "  FROM authCas a\n" +
-  //       "  JOIN emails e ON a.emailId = e.id AND a.nedId = e.nedId\n" +
-  //       "  JOIN individualProfiles i ON a.nedId = i.nedId\n" +
-  //       "  LEFT JOIN groups g ON a.nedId = g.nedId\n" +
-  //       "  LEFT JOIN globalTypes gt1 ON g.applicationTypeId = gt1.id\n" +
-  //       "  LEFT JOIN globalTypes gt2 ON g.typeId = gt2.id\n" +
-  //       "  WHERE {0}\"");
-
-  //   dao.setQueryAttributeMapping(new HashMap<String, String>() {{
-  //       put("username", "authId");
-  //   }});
-
-  //   dao.setResultAttributeMapping(new HashMap<String, String>() {{
-  //       put("authId","authId");
-  //       put("displayName","displayName");
-  //       put("emailAddress","emailAddress");
-  //       put("firstName","firstName");
-  //       put("groups","groups");
-  //       put("lastName","lastName");
-  //       put("middleName","middleName");
-  //       put("nedId","nedId");
-  //   }});
-
-  //   return dao;
-  // }

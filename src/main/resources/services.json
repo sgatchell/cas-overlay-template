@@ -5,5 +5,9 @@
   "@class" : "org.apereo.cas.services.RegexRegisteredService",
   "serviceId" : "^(https|http)://.*",
   "name" : "HTTPS and HTTP",
-  "id" : 10000001,
+  "id" : 12300001,
+  "attributeReleasePolicy" : {
+    "@class" : "org.apereo.cas.services.ReturnAllowedAttributeReleasePolicy",
+    "allowedAttributes" : [ "java.util.ArrayList", ["authId", "displayName", "emailAddress", "firstName", "groups", "lastName", "middleName", "nedId"]]
+  }
 }
